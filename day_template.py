@@ -1,4 +1,5 @@
 from aocutils import readFile, timeFunction, printParts
+from grid import Grid
 
 @timeFunction
 def main():
