@@ -39,3 +39,12 @@ venv.bak/
 
 # vs code settings
 .vscode/
+
+# aoc data (inputs, puzzle examples, answers, site cache)
+txts/
+*.txt
+answers.json
+.cache/
+
+# claude
+CLAUDE.md
