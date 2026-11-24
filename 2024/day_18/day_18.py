@@ -1,58 +1,24 @@
-import aocutils
-import numpy as np
-from heapq import heappush, heappop
+from utils import DIRS4, bfs, bisect_pred, ints, printParts, readFile, timeFunction
 
-h = w = 71
+N, FIRST = 71, 1024
+GOAL = (N - 1, N - 1)
 
-def dijkstra(grid, si, sj, ei, ej):
-	global h, w
-	heap, visited, weights = [], set(), dict()
-
-	heappush(heap, (0, si, sj, 0, 1))
-	heappush(heap, (0, si, sj, 1, 0))
-
-	while heap:
-		cost, curri, currj, diri, dirj = heappop(heap)
-		weights[(curri, currj)] = min(weights.get((curri, currj), np.inf), cost)
-
-		if (curri, currj) == (ei, ej):
-			return weights.get((ei, ej), np.inf)
-		else:
-			for dirii, dirjj in [(dirj, -diri), (-dirj, diri), (diri, dirj)]:
-				nexti, nextj = curri + dirii, currj + dirjj
-				if not aocutils.outOfBounds(nexti, nextj, h - 1, w - 1) and grid[nexti][nextj] != "#" and (nexti, nextj) not in visited:
-					visited.add((nexti, nextj))
-					heappush(heap, (cost + 1, nexti, nextj, dirii, dirjj))
-	return weights.get((ei, ej), np.inf)
-
-def getGridUntilByte(ref, n):
-	grid = [["." for _ in range(w)] for _ in range(h)]
-	for l in ref[:n]:
-		i, j = map(int, l.split(","))
-		grid[i][j] = "#"
-	return grid
-
-# 19.3s with linear Brute Force, 0.03s with Binary Search
-@aocutils.timeFunction
+@timeFunction
 def main():
-	global h, w
-	ref = aocutils.readFile(18, isTest=False, toList=False)
-	si, sj, ei, ej = 0, 0, 70, 70
+    falls = [tuple(ints(l)) for l in readFile(toList=False) if l]
 
-	total1, total2 = dijkstra(getGridUntilByte(ref, 1024), si, sj, ei, ej), 0
-	N = len(ref) - 1
-	start, end = 0, N
-	while start < end:
-		mid = (start + end) // 2
-		res = dijkstra(getGridUntilByte(ref, mid), si, sj, ei, ej)
-		if res == np.inf:
-			end = mid - 1
-		else:
-			start = mid + 1
-	
-	total2 = ref[mid + 1]
+    def steps(n):
+        blocked = set(falls[:n])
 
-	aocutils.printParts(total1, total2)
+        def nb(p):
+            for dx, dy in DIRS4:
+                q = (p[0] + dx, p[1] + dy)
+                if 0 <= q[0] < N and 0 <= q[1] < N and q not in blocked:
+                    yield q
+        return bfs((0, 0), nb, GOAL).get(GOAL)
+
+    n = bisect_pred(FIRST, len(falls) + 1, lambda n: steps(n) is None)
+    printParts(steps(FIRST), ",".join(map(str, falls[n - 1])))
 
 if __name__ == "__main__":
-	main()
+    main()

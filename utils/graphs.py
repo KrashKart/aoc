@@ -3,7 +3,6 @@ from graphlib import TopologicalSorter
 from heapq import heappop, heappush
 from math import inf
 
-
 def bfs(start, neighbours, goal=None):
     """Unweighted shortest distances from start; neighbours(node) yields adjacent nodes.
 
@@ -23,10 +22,8 @@ def bfs(start, neighbours, goal=None):
                 push(v)
     return dist
 
-
 def _goal_test(goal):
     return goal if callable(goal) else (lambda u: u == goal) if goal is not None else (lambda u: False)
-
 
 def dijkstra(start, neighbours, goal=None):
     """Weighted shortest paths; neighbours(node) yields (node, cost) and nodes must be orderable.
@@ -51,7 +48,6 @@ def dijkstra(start, neighbours, goal=None):
                 heappush(heap, (nd, v))
     return dist, parents, None
 
-
 def dijkstra_all(start, neighbours, goal=None):
     """Like dijkstra, but parents[node] lists every predecessor on a shortest path (for all_shortest_paths)."""
     done = _goal_test(goal)
@@ -73,7 +69,6 @@ def dijkstra_all(start, neighbours, goal=None):
                 parents[v].append(u)
     return dist, parents, None
 
-
 def reconstruct(parents, end):
     """Return the start..end path from dijkstra/astar parents."""
     path = []
@@ -81,7 +76,6 @@ def reconstruct(parents, end):
         path.append(end)
         end = parents[end]
     return path[::-1]
-
 
 def all_shortest_paths(parents, end):
     """Yield every shortest start..end path from dijkstra_all parents (can be exponentially many)."""
@@ -93,7 +87,6 @@ def all_shortest_paths(parents, end):
         else:
             yield path[::-1]
 
-
 def on_shortest_paths(parents, ends):
     """Return the set of nodes on any shortest path to any node in ends, from dijkstra_all parents."""
     seen = set(ends)
@@ -104,7 +97,6 @@ def on_shortest_paths(parents, ends):
                 seen.add(p)
                 stack.append(p)
     return seen
-
 
 def astar(start, goal, neighbours, h):
     """A* search; neighbours(node) yields (node, cost), h(node) is an admissible heuristic.
@@ -127,7 +119,6 @@ def astar(start, goal, neighbours, h):
                 heappush(heap, (nd + h(v), nd, v))
     return None, parents
 
-
 def components(nodes, neighbours):
     """Group nodes into connected components (lists) by flood fill; neighbours(node) yields connected nodes."""
     seen, out = set(), []
@@ -144,7 +135,6 @@ def components(nodes, neighbours):
                     stack.append(v)
         out.append(comp)
     return out
-
 
 class UnionFind:
     """Disjoint sets over 0..n-1 (pass an int) or over arbitrary hashable nodes (pass an iterable)."""
@@ -180,11 +170,9 @@ class UnionFind:
         self.count -= 1
         return True
 
-
 def topo_sort(deps):
     """Order nodes so every node comes after its prerequisites; deps maps node -> iterable of prerequisites."""
     return list(TopologicalSorter(deps).static_order())
-
 
 def grid_neighbours(grid, walls=b"#"):
     """Return a neighbours(i) function over a Grid's flat indices that skips cells whose value is in walls."""

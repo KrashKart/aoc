@@ -1,61 +1,36 @@
-import aocutils
-from copy import deepcopy
+from utils import DIRMAP, blocks, printParts, readRaw, timeFunction
 
-dirs = {"^": (-1, 0), ">": (0, 1), "<": (0, -1), "v": (1, 0)}
+WIDEN = str.maketrans({"#": "##", ".": "..", "O": "[]", "@": "@."})
 
-# MASSIVE THANKS to u/4HbQ, because I would not be able to figure this shorter implementation out without looking at his implementation
+def gps(rows, moves):
+    grid = {(x, y): c for y, r in enumerate(rows.splitlines()) for x, c in enumerate(r)}
+    pos = next(p for p, c in grid.items() if c == "@")
+    for m in moves:
+        dx, dy = DIRMAP[m]
+        # collect everything the robot would shove; a wide box drags its other half along
+        push, seen = [pos], {pos}
+        for x, y in push:
+            n = (x + dx, y + dy)
+            match grid[n]:
+                case "#":
+                    break
+                case "O" | "[" | "]" as c:
+                    for q in (n, (n[0] + (1 if c == "[" else -1), n[1])) if c != "O" else (n,):
+                        if q not in seen:
+                            seen.add(q)
+                            push.append(q)
+        else:
+            moved = {(x + dx, y + dy): grid[x, y] for x, y in push}
+            grid.update(dict.fromkeys(push, "."))
+            grid.update(moved)
+            pos = (pos[0] + dx, pos[1] + dy)
+    return sum(100 * y + x for (x, y), c in grid.items() if c in "O[")
 
-def move(grid, posi, posj, di, dj):
-	nexti, nextj = posi + di, posj + dj
-	if all([grid[nexti][nextj] != "[" or move(grid, nexti, nextj + 1, di, dj) and move(grid, nexti, nextj, di, dj),
-        	grid[nexti][nextj] != "]" or move(grid, nexti, nextj - 1, di, dj) and move(grid, nexti, nextj, di, dj),
-        	grid[nexti][nextj] != "O" or move(grid, nexti, nextj, di, dj), 
-			grid[nexti][nextj] != "#"]):
-		
-			grid[posi][posj], grid[nexti][nextj] = grid[nexti][nextj], grid[posi][posj]
-			return True
-	return False
-
-def sumCoords(grid):
-	s = 0
-	for i, l in enumerate(grid):
-		for j, t in enumerate(l):
-			if t in "O[":
-				s += 100 * i + j
-	return s
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	ref = aocutils.readFile(15, isTest=False, toList=False)
-	splitOn = 0
-	for idx, line in enumerate(ref):
-		if line == "":
-			splitOn = idx
-			break
-
-	grid, instructions = list(map(list, ref[:splitOn])), "".join(ref[splitOn + 1:])
-	grid2 = [list("".join(l).translate(str.maketrans({"#": "##", ".": "..", "O": "[]", "@": "@."}))) for l in grid]
-
-	ci, cj = 0, 0
-	isPart2 = False
-	for g in [grid, grid2]:
-		for i, line in enumerate(g):
-			for j, c in enumerate(line):
-				if c == "@":
-					ci, cj = i, j
-		for instrs in instructions:
-			unchanged = deepcopy(g)
-			di, dj = dirs[instrs]
-			if move(g, ci, cj, di, dj):
-				ci, cj = ci + di, cj + dj
-			else:
-				g = unchanged
-		if not isPart2:
-			total1 = sumCoords(g)
-			isPart2 = True
-	total2 = sumCoords(g)
-
-	aocutils.printParts(total1, total2)
+    rows, moves = blocks(readRaw())
+    moves = moves.replace("\n", "")
+    printParts(gps(rows, moves), gps(rows.translate(WIDEN), moves))
 
 if __name__ == "__main__":
-	main()
+    main()

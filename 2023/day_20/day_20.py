@@ -1,8 +1,6 @@
 from collections import deque
 from math import lcm
-
 from utils import printParts, readFile, timeFunction
-
 
 def machine(typ, dests):
     """Return a fresh press() generator factory yielding every (src, dst, high) pulse of one button press."""
@@ -33,7 +31,6 @@ def machine(typ, dests):
             q.extend((n, d, out) for d in dests[n])
     return press
 
-
 @timeFunction
 def main():
     typ, dests = {}, {}
@@ -57,7 +54,6 @@ def main():
             if n == hub and p:
                 first.setdefault(src, i)
     printParts(cnt[0] * cnt[1], lcm(*first.values()))
-
 
 if __name__ == "__main__":
     main()

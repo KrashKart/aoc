@@ -1,7 +1,5 @@
 from math import prod
-
 from utils import ints, printParts, readFile, timeFunction
-
 
 @timeFunction
 def main():
@@ -38,7 +36,6 @@ def main():
         return tot + combos(last, rng)
 
     printParts(sum(sum(p.values()) for p in parts if accepted(p)), combos("in", dict.fromkeys("xmas", (1, 4000))))
-
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,6 @@ DIRS4 = ((1, 0), (0, 1), (-1, 0), (0, -1))
 DIRS8 = DIRS4 + ((1, 1), (-1, 1), (-1, -1), (1, -1))
 DIRMAP = {">": (1, 0), "v": (0, 1), "<": (-1, 0), "^": (0, -1)}
 
-
 class Grid:
     """A w x h grid stored row-major in a flat array; char grids hold ASCII codes."""
     __slots__ = ("w", "h", "data", "typecode", "is_char")

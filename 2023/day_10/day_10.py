@@ -3,7 +3,6 @@ from utils import DIRS4, picks_interior, printParts, readFile, shoelace, timeFun
 PIPES = {"|": ((0, -1), (0, 1)), "-": ((-1, 0), (1, 0)), "L": ((0, -1), (1, 0)),
          "J": ((0, -1), (-1, 0)), "7": ((0, 1), (-1, 0)), "F": ((0, 1), (1, 0))}
 
-
 @timeFunction
 def main():
     g = readFile(toList=False)
@@ -21,7 +20,6 @@ def main():
         if c in "LJ7F":
             verts.append((x, y))
     printParts(n // 2, picks_interior(shoelace(verts), n))
-
 
 if __name__ == "__main__":
     main()

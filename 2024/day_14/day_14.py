@@ -1,66 +1,21 @@
-import aocutils
-from itertools import accumulate
-import re
+from math import prod
+from statistics import pvariance
+from utils import crt, ints, printParts, readFile, timeFunction
 
-ref, h, w = [], 101, 103
+W, H = 101, 103
 
-def quadrant(px, py):
-	global h, w
-	if px < h // 2 and py < w // 2:
-		return 0
-	elif px < h // 2 and py > w // 2:
-		return 1
-	elif px > h // 2 and py < w // 2:
-		return 2
-	elif px > h // 2 and py > w // 2:
-		return 3
-	else:
-		return -1
-	
-def getGrid(robots, t):
-	poses = set()
-	for robot in robots:
-		px, py = list(map(int, re.findall(r"p=(\d+),(\d+)", robot[0])[0]))
-		vx, vy = list(map(int, re.findall(r"v=([-\d]+),([-\d]+)", robot[1])[0]))
-		fx, fy = (px + vx * t) % h, (py + vy * t) % w
-		poses.add((fx, fy))
-	
-	grid = [["." for _ in range(w)] for _ in range(h)]
-	for i, j in poses:
-		grid[i][j] = "#"
-	return list(map(lambda x: "".join(x), grid))
-
-def safety(t):
-	quads = [0, 0, 0, 0]
-	for robot in ref:
-		px, py = list(map(int, re.findall(r"p=(\d+),(\d+)", robot[0])[0]))
-		vx, vy = list(map(int, re.findall(r"v=([-\d]+),([-\d]+)", robot[1])[0]))
-		fx, fy = (px + vx * t) % h, (py + vy * t) % w
-		quad = quadrant(fx, fy)
-		if quad != -1:
-			quads[quad] += 1
-	return quads[0] * quads[1] * quads[2] * quads[3]
-
-def findLine(grid):
-	for l in grid:
-		if "##########" in l:
-			return True
-	return False
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	global ref
-	ref = aocutils.readFile(14, " ")
-
-	total1, total2 = safety(100), 0
-
-	for i in range(10404):
-		if findLine(getGrid(ref, i)):
-			total2 = i
-			break
-
-	print("\n".join(getGrid(ref, total2)))
-	aocutils.printParts(total1, total2)
+    bots = [ints(l) for l in readFile(toList=False) if l]
+    quads = [0] * 4
+    for px, py, vx, vy in bots:
+        x, y = (px + 100 * vx) % W, (py + 100 * vy) % H
+        if x != W // 2 and y != H // 2:
+            quads[(x > W // 2) + 2 * (y > H // 2)] += 1
+    # x repeats every W steps and y every H; the tree is where both bunch up most, so combine with CRT
+    tx = min(range(W), key=lambda t: pvariance([(px + t * vx) % W for px, _, vx, _ in bots]))
+    ty = min(range(H), key=lambda t: pvariance([(py + t * vy) % H for _, py, _, vy in bots]))
+    printParts(prod(quads), crt([tx, ty], [W, H])[0])
 
 if __name__ == "__main__":
-	main()
+    main()

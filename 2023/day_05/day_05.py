@@ -1,6 +1,5 @@
 from utils import blocks, ints, printParts, readRaw, timeFunction
 
-
 def lowest(rngs, maps):
     """Push half-open [lo, hi) ranges through every map, splitting them where they straddle a rule."""
     for m in maps:
@@ -21,7 +20,6 @@ def lowest(rngs, maps):
         rngs = out
     return min(lo for lo, _ in rngs)
 
-
 @timeFunction
 def main():
     seeds, *maps = blocks(readRaw())
@@ -30,7 +28,6 @@ def main():
     one = lowest([(s, s + 1) for s in seeds], maps)
     two = lowest([(s, s + n) for s, n in zip(seeds[::2], seeds[1::2])], maps)
     printParts(one, two)
-
 
 if __name__ == "__main__":
     main()

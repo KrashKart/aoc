@@ -1,37 +1,26 @@
-import aocutils
+import numpy as np
+from utils import ints, printParts, readRaw, timeFunction
 
-prune = lambda n: n % 16777216
-mix = lambda n, a: n ^ a
+M, B = 0xFFFFFF, 19
 
-def generate(n):
-	n = prune(mix(64 * n, n))
-	n = prune(mix(n // 32, n))
-	return prune(mix(n * 2048, n))
-
-# 2.5s
-@aocutils.timeFunction
+@timeFunction
 def main():
-	ref = map(int, aocutils.readFile(22, isTest=False, toList=False))
-
-	total1, total2 = 0, 0
-	seqs = {}
-	for num in ref:
-		nums = [num % 10]
-		for _ in range(2000):
-			num = generate(num)
-			nums.append(num % 10)
-		total1 += num
-
-		diffs = [nums[i] - nums[i - 1] for i in range(1, len(nums))]
-		seen = set()
-		for i in range(len(nums) - 4):
-			interval = tuple(diffs[i:i + 4])
-			if interval not in seen:
-				seqs[interval] = seqs.get(interval, 0) + nums[i + 4]
-				seen.add(interval)
-
-	total2 = max(seqs.values())
-	aocutils.printParts(total1, total2)
+    s = np.array(ints(readRaw()), dtype=np.int64)
+    n = len(s)
+    prices = np.empty((2001, n), dtype=np.int64)
+    for i in range(2001):
+        prices[i] = s % 10
+        if i < 2000:
+            s = (s ^ (s << 6)) & M
+            s ^= s >> 5
+            s = (s ^ (s << 11)) & M
+    d = np.diff(prices, axis=0) + 9
+    key = ((d[:-3] * B + d[1:-2]) * B + d[2:-1]) * B + d[3:]
+    # tag each key with its buyer so np.unique's first-occurrence index finds each buyer's first sighting of a sequence
+    tagged = (key.T + np.arange(n)[:, None] * B ** 4).ravel()
+    uniq, first = np.unique(tagged, return_index=True)
+    bananas = np.bincount(uniq % B ** 4, weights=prices[4:].T.ravel()[first], minlength=B ** 4)
+    printParts(int(s.sum()), int(bananas.max()))
 
 if __name__ == "__main__":
-	main()
+    main()

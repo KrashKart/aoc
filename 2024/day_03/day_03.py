@@ -1,26 +1,19 @@
 import re
-import aocutils
+from utils import printParts, readRaw, timeFunction
 
-@aocutils.timeFunction
+@timeFunction
 def main():
-    total1 = 0
-    total2 = 0
-    do = 1
-
-    lines = aocutils.readFile(3, False)
-    for line in lines:
-        muls = re.findall(r"mul\((\d+),(\d+)\)|(do\(\))|(don't\(\))", line)
-        for match in muls:
-            # part 1 and 2
-            if match[0]:
-                total1 += int(match[0]) * int(match[1])
-                total2 += do * int(match[0]) * int(match[1])
-            
-            # part 2
-            elif match[2]: do = 1
-            else: do = 0
-    
-    aocutils.printParts(total1, total2)
+    one = two = 0
+    on = True
+    for m in re.finditer(r"mul\((\d+),(\d+)\)|do\(\)|don't\(\)", readRaw()):
+        match m[0]:
+            case "do()": on = True
+            case "don't()": on = False
+            case _:
+                p = int(m[1]) * int(m[2])
+                one += p
+                two += p * on
+    printParts(one, two)
 
 if __name__ == "__main__":
     main()

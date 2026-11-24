@@ -1,7 +1,5 @@
 from collections import defaultdict, deque
-
 from utils import printParts, readFile, timeFunction
-
 
 def s_side(adj, s, t, k=3):
     """If the s-t min cut is exactly k (unit edges), return the nodes on s's side, else None."""
@@ -26,7 +24,6 @@ def s_side(adj, s, t, k=3):
             v = u
     return None
 
-
 @timeFunction
 def main():
     adj = defaultdict(set)
@@ -38,7 +35,6 @@ def main():
     s, *rest = adj
     side = next(p for t in rest if (p := s_side(adj, s, t)))
     printParts(len(side) * (len(adj) - len(side)), None)
-
 
 if __name__ == "__main__":
     main()

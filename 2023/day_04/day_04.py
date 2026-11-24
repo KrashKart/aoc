@@ -1,6 +1,5 @@
 from utils import printParts, readFile, timeFunction
 
-
 @timeFunction
 def main():
     wins = []
@@ -12,7 +11,6 @@ def main():
         for j in range(i + 1, min(i + 1 + n, len(wins))):
             copies[j] += copies[i]
     printParts(sum(1 << n >> 1 for n in wins), sum(copies))
-
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@ from multiprocessing import Pool
 def traverse(grid, i, j, h, w, isPart1=True):
     total = 0
     moves = 0
-    di, dj = -1, 0 
+    di, dj = -1, 0
     while (not aocutils.outOfBounds(i, j, h - 1, w - 1) and moves <= h * w):
         if grid[i][j] == "#":
             i, j = i - di, j - dj

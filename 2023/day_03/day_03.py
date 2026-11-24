@@ -1,9 +1,7 @@
 import re
 from collections import defaultdict
 from math import prod
-
 from utils import printParts, readFile, timeFunction
-
 
 @timeFunction
 def main():
@@ -22,7 +20,6 @@ def main():
                 if g[yy][x] == "*":
                     gears[x, yy].append(n)
     printParts(one, sum(prod(v) for v in gears.values() if len(v) == 2))
-
 
 if __name__ == "__main__":
     main()

@@ -1,33 +1,23 @@
-import aocutils
+from utils import DIRS4, Grid, components, printParts, readRaw, timeFunction
 
-def perimeter(group, withDiscount):
-	perimeter = {(i, j, di, dj) for (di, dj) in aocutils.getLRUD() for (i, j) in group if (i + di, j + dj) not in group}
-	if withDiscount:
-		perimeter -= {(i - dj, j - di, di, dj) for (i, j, di, dj) in perimeter}
-	return len(perimeter)
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	grid = aocutils.readFile(12, isTest=False)
-	total1, total2 = 0, 0
-	
-	h, w = len(grid), len(grid[0])
-	groups = {(i, j): {(i, j)} for i in range(h) for j in range(w)}
-
-	for i in range(h):
-		for j in range(w):
-			for di, dj in aocutils.getLRUD():
-				if not aocutils.outOfBounds(i + di, j + dj, h - 1, w - 1) and grid[i][j] == grid[i + di][j + dj]:
-					groups[(i, j)] = groups[(i, j)].union(groups[(i + di, j + dj)])
-					for coords in groups[(i, j)]:
-						groups[coords] = groups[(i, j)]
-	unique_groups = {tuple(group) for group in groups.values()}
-
-	for group in unique_groups:
-		total1 += len(group) * perimeter(group, False)
-		total2 += len(group) * perimeter(group, True)
-
-	aocutils.printParts(total1, total2)
+    g = Grid.from_chars(readRaw())
+    d = g.data
+    one = two = 0
+    for comp in components(range(len(d)), lambda i: (j for j in g.nbr4_idx(i) if d[j] == d[i])):
+        s = {g.xy(i) for i in comp}
+        per = corners = 0
+        for x, y in s:
+            for k, (ax, ay) in enumerate(DIRS4):
+                bx, by = DIRS4[(k + 1) % 4]
+                a, b = (x + ax, y + ay) in s, (x + bx, y + by) in s
+                per += not a
+                # sides == corners: convex where both arms are outside, concave where both are inside but the diagonal isn't
+                corners += (not a and not b) or (a and b and (x + ax + bx, y + ay + by) not in s)
+        one += len(s) * per
+        two += len(s) * corners
+    printParts(one, two)
 
 if __name__ == "__main__":
-	main()
+    main()

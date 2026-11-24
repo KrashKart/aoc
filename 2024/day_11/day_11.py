@@ -1,31 +1,27 @@
-import aocutils
+from collections import Counter
+from utils import ints, printParts, readRaw, timeFunction
 
-def change(stone):
-	if int(stone) == 0:
-		return ["1"]
-	elif len(stone) % 2 == 0:
-		mid = len(stone) // 2
-		return [str(int(stone[:mid])), str(int(stone[mid:]))]
-	else:
-		return [str(int(stone) * 2024)]
+def blink(c):
+    out = Counter()
+    for s, k in c.items():
+        if s == 0:
+            out[1] += k
+        elif (l := len(str(s))) % 2 == 0:
+            m = 10 ** (l // 2)
+            out[s // m] += k
+            out[s % m] += k
+        else:
+            out[s * 2024] += k
+    return out
 
-@aocutils.timeFunction
+@timeFunction
 def main():
-	ref = aocutils.readFile(11, " ")[0]
-	helper = {i: 1 for i in ref}
-	for i in range(75):
-		nexthelper = {}
-		if i == 25:
-			total1 = sum(helper.values())
-		for k, v in helper.items():
-			for j in change(k):
-				nexthelper[j] = nexthelper.get(j, 0) + v
-			
-		helper = nexthelper
-	
-	print(max(map(int, helper.keys())))
-	total2 = sum(helper.values())
-	aocutils.printParts(total1, total2)
+    c = Counter(ints(readRaw()))
+    for i in range(75):
+        if i == 25:
+            one = c.total()
+        c = blink(c)
+    printParts(one, c.total())
 
 if __name__ == "__main__":
-	main()
+    main()

@@ -1,31 +1,23 @@
-import aocutils
-from multiprocessing import Pool
+from utils import ints, printParts, readFile, timeFunction
 
-def extract(x):
-    val, operands = x.split(": ")
-    return (int(val), list(map(int, operands.split(" "))), 0)
+def solvable(t, ns, cat):
+    """Work backwards from the target, undoing the last operator, which prunes far more than going forwards."""
+    *rest, last = ns
+    if not rest:
+        return t == last
+    if t > last and solvable(t - last, rest, cat):
+        return True
+    if t % last == 0 and solvable(t // last, rest, cat):
+        return True
+    m = 10 ** len(str(last))
+    return cat and t > last and t % m == last and solvable(t // m, rest, cat)
 
-def canCompute(target, operands, val, part1):
-    if not operands:
-        return target == val
-    
-    isComputable = canCompute(target, operands[1:], val + operands[0]               , part1) \
-                or canCompute(target, operands[1:], val * operands[0]               , part1) \
-                or canCompute(target, operands[1:], int(str(val) + str(operands[0])), part1) and not part1
-    
-    return target if isComputable else 0
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-    pool = Pool()
-    total1 = 0
-    total2 = 0
-    eqns = list(map(lambda x: extract(x), aocutils.readFile(7, isTest=False, toList=False)))
-
-    total1 = sum(pool.starmap(canCompute, list(map(lambda x: x + (True,), eqns))))
-    total2 = sum(pool.starmap(canCompute, list(map(lambda x: x + (False,), eqns))))
-
-    aocutils.printParts(total1, total2)
+    eqs = [ints(l) for l in readFile(toList=False) if l]
+    one = sum(t for t, *ns in eqs if solvable(t, ns, False))
+    two = sum(t for t, *ns in eqs if solvable(t, ns, True))
+    printParts(one, two)
 
 if __name__ == "__main__":
     main()

@@ -1,35 +1,16 @@
-import aocutils
+from utils import DIRS8, printParts, readFile, timeFunction
 
-dirs = [[i, j] for i in [-1, 0, 1] for j in [-1, 0, 1] if (i, j) != (0, 0)]
-a = ["SAM", "MAS"]
-grid = aocutils.readFile(4)
-
-def matchPattern(i, j):
-    if i > len(grid) - 3 or j > len(grid[0]) - 3:
-        return 0
-    cross1 = grid[i][j] + grid[i + 1][j + 1] + grid[i + 2][j + 2]
-    cross2 = grid[i + 2][j] + grid[i + 1][j + 1] + grid[i][j + 2]
-    if cross1 in a and cross2 in a:
-        return 1
-    return 0
-
-def traverse(i, j, dir, accum):
-    if accum == "XMAS":
-        return 1
-    elif len(accum) > 4 or aocutils.outOfBounds(i, j, len(grid) - 1, len(grid[0]) - 1):
-        return 0
-    return traverse(i + dir[0], j + dir[1], dir, accum + grid[i][j])
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-    total1, total2 = 0, 0
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            for dir in dirs:
-                total1 += traverse(i, j, dir, "")
-            total2 += matchPattern(i, j)
-
-    aocutils.printParts(total1, total2)
+    g = readFile(toList=False)
+    h, w = len(g), len(g[0])
+    one = sum(all(0 <= x + k * dx < w and 0 <= y + k * dy < h and g[y + k * dy][x + k * dx] == c
+                  for k, c in enumerate("XMAS"))
+              for y in range(h) for x in range(w) if g[y][x] == "X" for dx, dy in DIRS8)
+    ms = {"M", "S"}
+    two = sum(g[y][x] == "A" and {g[y - 1][x - 1], g[y + 1][x + 1]} == ms == {g[y - 1][x + 1], g[y + 1][x - 1]}
+              for y in range(1, h - 1) for x in range(1, w - 1))
+    printParts(one, two)
 
 if __name__ == "__main__":
     main()

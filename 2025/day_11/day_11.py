@@ -1,50 +1,25 @@
-from aocutils import readFile, timeFunction, printParts
-import igraph as ig
-
-def dfs(edges: dict, start, end):
-    ref = {end: 1}
-
-    while start not in ref.keys():
-        for node in edges.keys():
-            if node not in ref and all(n in ref.keys() for n in edges.get(node, tuple())):
-                ref[node] = sum(ref[n] for n in edges.get(node, ()))
-    return ref[start]
+from functools import cache
+from utils import printParts, readFile, timeFunction
 
 @timeFunction
-def main_dfs():
-    one, two = 0, 0
-    t = False
-    lines = readFile(11, toList=False, isTest=t)
+def main():
     E = {}
-    for line in lines:
-        u, vs = line.split(":")
-        u, vs = u.strip(), tuple(map(lambda x: x.strip(), vs.strip().split(" ")))
-        E[u] = vs
-    E["out"] = tuple()
-    one = dfs(E, "you", "out")
-    two = dfs(E, "svr", "dac") * dfs(E, "dac", "fft") * dfs(E, "fft", "out") 
-    two += dfs(E, "svr", "fft") * dfs(E, "fft", "dac") * dfs(E, "dac", "out")
-    printParts(one, two)
+    for line in readFile(toList=False):
+        if line:
+            u, vs = line.split(":")
+            E[u.strip()] = vs.split()
 
-# Too long!
-@timeFunction
-def main_ig():
-    one, two = 0, 0
-    t = False
-    lines = readFile(11, toList=False, isTest=t)
-    G = ig.Graph(directed=True)
-    for line in lines:
-        u, vs = line.split(":")
-        u, vs = u.strip(), list(map(lambda x: x.strip(), vs.strip().split(" ")))
-        G.add_vertices([u, *vs])
-        G.add_edges([(u, v) for v in vs])
-    one = len(G.get_all_simple_paths("you", "out"))
-    two = len(G.get_all_simple_paths("svr", "dac")) * len(G.get_all_simple_paths("dac", "fft")) \
-        * len(G.get_all_simple_paths("fft", "out")) + len(G.get_all_simple_paths("svr", "fft")) \
-        * len(G.get_all_simple_paths("fft", "dac")) * len(G.get_all_simple_paths("dac", "out"))
-    printParts(one, two)
-    del G
-    
+    @cache
+    def paths(u, end):
+        return 1 if u == end else sum(paths(v, end) for v in E.get(u, ()))
+
+    def via(*stops):
+        n = 1
+        for a, b in zip(stops, stops[1:]):
+            n *= paths(a, b)
+        return n
+
+    printParts(paths("you", "out"), via("svr", "dac", "fft", "out") + via("svr", "fft", "dac", "out"))
+
 if __name__ == "__main__":
-    main_dfs()
-    # main_ig()
+    main()

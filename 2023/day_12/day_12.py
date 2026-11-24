@@ -1,7 +1,5 @@
 from functools import cache
-
 from utils import ints, printParts, readFile, timeFunction
-
 
 @cache
 def arrangements(s, g):
@@ -15,14 +13,12 @@ def arrangements(s, g):
         res += arrangements(s[n + 1:], g[1:])
     return res
 
-
 @timeFunction
 def main():
     rows = [(s, tuple(ints(r))) for s, r in readFile(splitOn=" ")]
     one = sum(arrangements(s, g) for s, g in rows)
     two = sum(arrangements("?".join([s] * 5), g * 5) for s, g in rows)
     printParts(one, two)
-
 
 if __name__ == "__main__":
     main()

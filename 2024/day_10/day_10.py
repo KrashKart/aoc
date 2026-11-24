@@ -1,36 +1,21 @@
-import aocutils
+from utils import Grid, printParts, readRaw, timeFunction
 
-visited = []
-grid = []
-h = 0
-w = 0
-
-def score(i, j, isPart1):
-	global grid, visited, h, w
-	if grid[i][j] == 9 and ((i, j) not in visited or not isPart1):
-		visited.append((i, j))
-		return 1
-	res = 0
-	for di, dj in aocutils.getLRUD():
-		if not aocutils.outOfBounds(i + di, j + dj, h - 1, w - 1) and grid[i + di][j + dj] - grid[i][j] == 1:
-			res += score(i + di, j + dj, isPart1)
-	return res
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	global grid, h, w, visited
-	grid = list(map(lambda x: list(map(int, x)), aocutils.readFile(10)))
-	h, w = len(grid), len(grid[0])
-	total1, total2 = 0, 0
-	
-	for i in range(h):
-		for j in range(w):
-			if grid[i][j] == 0:
-				visited = []
-				total1 += score(i, j, True)
-				total2 += score(i, j, False)
-
-	aocutils.printParts(total1, total2)
+    g = Grid.from_digits(readRaw())
+    d, n = g.data, len(g.data)
+    # sweep from height 9 down so every uphill neighbour is finished before its predecessor
+    peaks, paths = [set() for _ in range(n)], [0] * n
+    for i in sorted(range(n), key=lambda i: -d[i]):
+        if d[i] == 9:
+            peaks[i], paths[i] = {i}, 1
+            continue
+        for j in g.nbr4_idx(i):
+            if d[j] == d[i] + 1:
+                peaks[i] |= peaks[j]
+                paths[i] += paths[j]
+    heads = [i for i in range(n) if d[i] == 0]
+    printParts(sum(len(peaks[i]) for i in heads), sum(paths[i] for i in heads))
 
 if __name__ == "__main__":
-	main()
+    main()

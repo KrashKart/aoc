@@ -2,7 +2,6 @@ from utils import DIRS4, printParts, readFile, timeFunction
 
 STEPS = 26501365
 
-
 def reachable(g, start, n):
     """counts[s] = plots reachable in exactly s steps on the infinitely tiled grid, for s in 0..n."""
     h, w = len(g), len(g[0])
@@ -19,7 +18,6 @@ def reachable(g, start, n):
         frontier = nxt
     return counts
 
-
 @timeFunction
 def main():
     g = readFile(toList=False)
@@ -30,7 +28,6 @@ def main():
     # the count grows quadratically in whole tiles walked, so extrapolate from 3 samples (see derivation.jpg)
     y0, y1, y2 = (counts[r + k * w] for k in range(3))
     printParts(counts[64], y0 + (y1 - y0) * s + (y2 - 2 * y1 + y0) * s * (s - 1) // 2)
-
 
 if __name__ == "__main__":
     main()

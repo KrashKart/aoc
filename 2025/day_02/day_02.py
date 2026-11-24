@@ -1,31 +1,19 @@
-from aocutils import readFile, timeFunction, printParts
+from utils import printParts, readRaw, timeFunction
 
-def isInvalid(s, length):
-    target = s[:length]
-    for i in range(0, len(s), length):
-        if s[i:i+length] != target:
-            return False
-    return True
+def invalid(lo, hi, halves_only):
+    """IDs in [lo, hi] that are some digit block repeated (exactly twice if halves_only)."""
+    out = set()
+    for L in range(len(str(lo)), len(str(hi)) + 1):
+        for k in ([L // 2] if L % 2 == 0 else []) if halves_only else [k for k in range(1, L) if L % k == 0]:
+            rep = (10 ** L - 1) // (10 ** k - 1)
+            for p in range(max(10 ** (k - 1), -(-lo // rep)), min(10 ** k - 1, hi // rep) + 1):
+                out.add(p * rep)
+    return out
 
 @timeFunction
 def main():
-    one, two = 0, 0
-    t = False
-    lines = readFile(2, splitOn=",", toList=False, isTest=t)[0]
-    
-    for l in lines:
-        l = l.split("-")
-        start, end = int(l[0]), int(l[1])
-        for n in range(start, end + 1):
-            s = str(n)
-            for i in range(len(s) // 2, 0, -1):
-                if isInvalid(s, i):
-                    if i == len(s) / 2:
-                        one += n
-                    two += n
-                    break
+    rngs = [tuple(map(int, r.split("-"))) for r in readRaw().strip().split(",")]
+    printParts(*(sum(sum(invalid(lo, hi, h)) for lo, hi in rngs) for h in (True, False)))
 
-    printParts(one, two)
-    
 if __name__ == "__main__":
     main()

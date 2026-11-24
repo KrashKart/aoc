@@ -1,10 +1,8 @@
 import re
 from math import prod
-
 from utils import ints, printParts, readFile, timeFunction
 
 LIMIT = {"red": 12, "green": 13, "blue": 14}
-
 
 @timeFunction
 def main():
@@ -15,7 +13,6 @@ def main():
             one += ints(line)[0]
         two += prod(mx.values())
     printParts(one, two)
-
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 from utils import ints, printParts, readFile, timeFunction
 
-
 @timeFunction
 def main():
     bricks = sorted((ints(l) for l in readFile(toList=False) if l), key=lambda b: b[2])
@@ -21,7 +20,6 @@ def main():
                 fallen.add(j)
         two += len(fallen) - 1
     printParts(one, two)
-
 
 if __name__ == "__main__":
     main()

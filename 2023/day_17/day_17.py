@@ -2,7 +2,6 @@ from utils import Grid, dijkstra, printParts, readRaw, timeFunction
 
 AXES = (((1, 0), (-1, 0)), ((0, 1), (0, -1)))
 
-
 def least_heat(g, lo, hi):
     # state (x, y, axis last moved on); each move turns onto the other axis and goes lo..hi cells
     w, h, data = g.w, g.h, g.data
@@ -25,12 +24,10 @@ def least_heat(g, lo, hi):
     dist, _, end = dijkstra((0, 0, -1), nb, lambda u: u[0] == w - 1 and u[1] == h - 1)
     return dist[end]
 
-
 @timeFunction
 def main():
     g = Grid.from_digits(readRaw())
     printParts(least_heat(g, 1, 3), least_heat(g, 4, 10))
-
 
 if __name__ == "__main__":
     main()

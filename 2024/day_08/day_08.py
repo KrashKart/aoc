@@ -1,50 +1,27 @@
-import aocutils
+from collections import defaultdict
+from itertools import permutations
+from utils import printParts, readFile, timeFunction
 
-def findAntinodes(i, j, i_diff, j_diff, h, w):
-	antinodes = []
-	while not aocutils.outOfBounds(i + i_diff, j + j_diff, h - 1, w - 1):
-		antinodes.append((i + i_diff, j + j_diff))
-		i += i_diff
-		j += j_diff
-	return antinodes
-
-def antinodesInBounds(coordi, coordj, h, w):
-	x1, y1 = coordi
-	x2, y2 = coordj
-	x_diff, y_diff = x1 - x2, y1 - y2
-
-	antinodes1 = findAntinodes(x1, y1, x_diff, y_diff, h, w)
-	antinodes2 = findAntinodes(x2, y2, -x_diff, -y_diff, h, w)
-
-	return antinodes1[:1] + antinodes2[:1], antinodes1 + antinodes2 + [coordi, coordj]
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	grid = aocutils.readFile(8)
-	h, w = len(grid), len(grid[0])
-	ref = {}
-	for i in range(h):
-		for j in range(w):
-			if grid[i][j] != ".":
-				temp = ref.get(grid[i][j], [])
-				temp.append((i, j))
-				ref[grid[i][j]] = temp
-
-	antinodes1 = []
-	antinodes2 = []
-	pairs = 0
-	for v in ref.values():
-		for x in range(len(v) - 1):
-			for y in range(x + 1, len(v)):
-				if x != y:
-					res = antinodesInBounds(v[x], v[y], h, w)
-					antinodes1 += res[0]
-					antinodes2 += res[1]
-	total1 = len(set(antinodes1))
-	total2 = len(set(antinodes2)) + pairs
-	
-	aocutils.printParts(total1, total2)
-
+    g = readFile(toList=False)
+    h, w = len(g), len(g[0])
+    ants = defaultdict(list)
+    for y, r in enumerate(g):
+        for x, c in enumerate(r):
+            if c != ".":
+                ants[c].append((x, y))
+    one, two = set(), set()
+    for ps in ants.values():
+        for (x1, y1), (x2, y2) in permutations(ps, 2):
+            dx, dy = x2 - x1, y2 - y1
+            if 0 <= x2 + dx < w and 0 <= y2 + dy < h:
+                one.add((x2 + dx, y2 + dy))
+            x, y = x2, y2
+            while 0 <= x < w and 0 <= y < h:
+                two.add((x, y))
+                x, y = x + dx, y + dy
+    printParts(len(one), len(two))
 
 if __name__ == "__main__":
-	main()
+    main()

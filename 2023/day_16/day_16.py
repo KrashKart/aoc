@@ -1,6 +1,5 @@
 from utils import DIRS4, printParts, readFile, timeFunction
 
-
 def energize(g, start):
     # d indexes DIRS4: 0 right, 1 down, 2 left, 3 up
     w, h = len(g[0]), len(g)
@@ -22,7 +21,6 @@ def energize(g, start):
             stack.append((x + dx, y + dy, nd))
     return len({(x, y) for x, y, _ in seen})
 
-
 @timeFunction
 def main():
     g = readFile(toList=False)
@@ -30,7 +28,6 @@ def main():
     starts = ([(0, y, 0) for y in range(h)] + [(w - 1, y, 2) for y in range(h)]
               + [(x, 0, 1) for x in range(w)] + [(x, h - 1, 3) for x in range(w)])
     printParts(energize(g, (0, 0, 0)), max(energize(g, s) for s in starts))
-
 
 if __name__ == "__main__":
     main()

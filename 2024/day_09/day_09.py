@@ -1,51 +1,42 @@
-import aocutils
+from heapq import heappop, heappush
+from utils import printParts, readRaw, timeFunction
 
-# inspiration of using memory classes from Topaz
-class Memory:
-	def __init__(self, size, pos, idx):
-		self.size = size
-		self.pos = pos
-		self.idx = idx
-	
-	def check(self):
-		return (2 * self.pos + self.size - 1) * self.size // 2 * self.idx
-	
-	def __repr__(self):
-		return f"Size: {self.size} | Pos: {self.pos} | Id: {self.idx}"
+def compact_blocks(disk):
+    mem = [i // 2 if i % 2 == 0 else -1 for i, n in enumerate(disk) for _ in range(n)]
+    l, r = 0, len(mem) - 1
+    while True:
+        while mem[l] != -1:
+            l += 1
+        while mem[r] == -1:
+            r -= 1
+        if l >= r:
+            return sum(i * v for i, v in enumerate(mem) if v != -1)
+        mem[l], mem[r] = mem[r], -1
 
-def rearrange(mems, freespaces):
-	for mem in mems[::-1]:
-		for freespace in freespaces:
-			if mem.pos > freespace.pos and freespace.size >= mem.size:
-				mem.pos = freespace.pos
-				freespace.pos += mem.size
-				freespace.size -= mem.size
-	return mems
+def compact_files(disk):
+    # gaps[s] is a min-heap of start positions of free spans of length s
+    files, gaps, pos = [], [[] for _ in range(10)], 0
+    for i, n in enumerate(disk):
+        if i % 2 == 0:
+            files.append([pos, n, i // 2])
+        elif n:
+            heappush(gaps[n], pos)
+        pos += n
+    for f in reversed(files):
+        p, n, _ = f
+        best = min(((gaps[s][0], s) for s in range(n, 10) if gaps[s]), default=None)
+        if best and best[0] < p:
+            start, s = best
+            heappop(gaps[s])
+            f[0] = start
+            if s > n:
+                heappush(gaps[s - n], start + n)
+    return sum(i * (p * n + n * (n - 1) // 2) for p, n, i in files)
 
-def checksum(mems):
-	return sum(mem.check() for mem in mems)
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	ref = list(map(int, aocutils.readFile(9)[0]))
-	mems1, mems2, freespaces1, freespaces2, pos = [], [], [], [], 0
-
-	idx = 0
-	for p, r in enumerate(ref):
-		if p % 2 == 0:
-			mems2.append(Memory(r, pos, idx))
-			for i in range(r):
-				mems1.append(Memory(1, pos + i, idx))
-			idx += 1
-		else:
-			freespaces2.append(Memory(r, pos, -1))
-			for i in range(r):
-				freespaces1.append(Memory(1, pos + i, -1))
-		pos += r
-
-	mems1, mems2 = rearrange(mems1, freespaces1), rearrange(mems2, freespaces2)
-	total1, total2 = checksum(mems1), checksum(mems2)
-	aocutils.printParts(total1, total2)
+    disk = list(map(int, readRaw().strip()))
+    printParts(compact_blocks(disk), compact_files(disk))
 
 if __name__ == "__main__":
-	main()
+    main()

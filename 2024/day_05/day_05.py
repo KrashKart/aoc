@@ -1,33 +1,19 @@
-import aocutils
-import functools
+from functools import cmp_to_key
+from utils import blocks, ints, printParts, readRaw, timeFunction
 
-everything = aocutils.readFile(5, toList=False)
-partition = everything.index("")
-rules, updates = everything[:partition], everything[partition + 1:]
-
-rules = list(map(lambda x: tuple(map(int, x.split("|"))), rules))
-updates = list(map(lambda x: list(map(int, x.split(","))), updates))
-
-def isGreater(a, b):
-    for r in rules:
-        if r == (a, b):
-            return -1
-        elif r == (b, a):
-            return 1
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-    total1 = 0
-    total2 = 0
-    for u in updates:
-        uOriginal = u[::]
-        uOriginal.sort(key=functools.cmp_to_key(isGreater))
-        if uOriginal == u:
-            total1 += u[len(u) // 2]
+    r, u = blocks(readRaw())
+    rules = {tuple(ints(l)) for l in r.splitlines()}
+    key = cmp_to_key(lambda a, b: -1 if (a, b) in rules else (b, a) in rules)
+    one = two = 0
+    for up in map(ints, u.splitlines()):
+        s = sorted(up, key=key)
+        if s == up:
+            one += up[len(up) // 2]
         else:
-            total2 += uOriginal[len(u) // 2]
-
-    aocutils.printParts(total1, total2)
+            two += s[len(s) // 2]
+    printParts(one, two)
 
 if __name__ == "__main__":
     main()

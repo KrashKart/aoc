@@ -1,91 +1,39 @@
-import aocutils
-import re
-from itertools import permutations
-from collections import deque
+from collections import defaultdict
+from utils import blocks, printParts, readRaw, timeFunction
 
-def process(ref, gates):
-	waiting = deque()
-	waiting.extend(gates)
-
-	while waiting:
-		a, op, b, c = waiting.popleft()
-		if a not in ref.keys() or b not in ref.keys():
-			waiting.append((a, op, b, c))
-		else:
-			match op:
-				case "AND":
-					ref[c] = ref[a] & ref[b]
-				case "OR":
-					ref[c] = ref[a] | ref[b]
-				case _:
-					ref[c] = ref[a] ^ ref[b]
-
-	return int("".join([str(ref[k]) for k in sorted(ref.keys(), reverse=True) if k.startswith("z")]), 2) # convert to decimal
-
-# inspiration from u/ayoubzulfiqar
-def find(a, op, b, gates):
-    for gate in gates:
-        if a in gate and op in gate and b in gate:
-            return gate[-1]
-    return None
-
-# inspiration from u/ayoubzulfiqar
-def solve(gates):
-	swapped = []
-	prevCarry = None
-	for i in range(45):
-		n = str(i).zfill(2)
-		sumBit = carryBit = prevCarryCarried = prevCarryAdded = currCarry = None
-
-		sumBit = find(f"x{n}", f"y{n}", "XOR", gates)
-		carryBit = find(f"x{n}", f"y{n}", "AND", gates)
-
-		if prevCarry:
-			prevCarryCarried = find(prevCarry, sumBit, "AND", gates)
-			prevCarryAdded = find(prevCarry, sumBit, "XOR", gates)
-			
-			if not prevCarryCarried:
-				sumBit, carryBit = carryBit, sumBit
-				swapped.extend([sumBit, carryBit])
-				prevCarryCarried = find(prevCarry, sumBit, "AND", gates)
-
-			if sumBit and sumBit.startswith("z"):
-				sumBit, prevCarryAdded = prevCarryAdded, sumBit
-				swapped.extend([sumBit, prevCarryAdded])
-
-			if carryBit and carryBit.startswith("z"):
-				carryBit, prevCarryAdded = prevCarryAdded, carryBit
-				swapped.extend([carryBit, prevCarryAdded])
-
-			if prevCarryCarried and prevCarryCarried.startswith("z"):
-				prevCarryCarried, prevCarryAdded = prevCarryAdded, prevCarryCarried
-				swapped.extend([prevCarryCarried, prevCarryAdded])
-
-			currCarry = find(prevCarryCarried, carryBit, "OR", gates)
-
-		if currCarry and currCarry.startswith("z") and currCarry != "z45":
-			currCarry, prevCarryAdded = prevCarryAdded, currCarry
-			swapped.extend([currCarry, prevCarryAdded])
-
-		prevCarry = currCarry if prevCarry else carryBit
-
-	return ",".join(sorted(swapped))
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-	inputs, gates = aocutils.readFileWithNewline(24, isTest=False, toList=False)
-	ref = {}
-	for i in inputs:
-		inputName, val = i.split(": ")
-		val = int(val)
-		ref[inputName] = val
+    init, gl = blocks(readRaw())
+    vals = {k: int(v) for k, v in (l.split(": ") for l in init.splitlines())}
+    gates = {c: (a, op, b) for a, op, b, _, c in map(str.split, gl.splitlines())}
 
-	gates = list(map(lambda x: re.findall(r"(.{3}) (AND|OR|XOR) (.{3}) -> (.{3})", x)[0], gates))
+    def val(w):
+        if w not in vals:
+            a, op, b = gates[w]
+            x, y = val(a), val(b)
+            vals[w] = x & y if op == "AND" else x | y if op == "OR" else x ^ y
+        return vals[w]
 
-	total1, total2 = process(ref, gates), solve(gates)
+    zs = sorted((w for w in gates if w[0] == "z"), reverse=True)
+    one = int("".join(str(val(z)) for z in zs), 2)
 
-	aocutils.printParts(total1, total2)
-
+    # in a ripple-carry adder every gate's role is fixed by its inputs; flag outputs that break the pattern
+    uses = defaultdict(set)
+    for a, op, b in gates.values():
+        uses[a].add(op)
+        uses[b].add(op)
+    wrong = set()
+    for c, (a, op, b) in gates.items():
+        xy, first = a[0] in "xy" and b[0] in "xy", "x00" in (a, b)
+        if c[0] == "z" and op != "XOR" and c != zs[0]:
+            wrong.add(c)
+        elif op == "XOR" and not xy and c[0] != "z":
+            wrong.add(c)
+        elif op == "XOR" and xy and not first and "XOR" not in uses[c]:
+            wrong.add(c)
+        elif op == "AND" and not first and "OR" not in uses[c]:
+            wrong.add(c)
+    printParts(one, ",".join(sorted(wrong)))
 
 if __name__ == "__main__":
-	main()
+    main()

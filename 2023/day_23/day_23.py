@@ -1,6 +1,5 @@
 from utils import DIRMAP, DIRS4, printParts, readFile, timeFunction
 
-
 def condense(g, nodes, slopes):
     """Map each junction to [(next junction, corridor length)], optionally obeying slopes."""
     h = len(g)
@@ -23,7 +22,6 @@ def condense(g, nodes, slopes):
                 adj[s].append((cur, d))
     return adj
 
-
 def longest(adj, start, end):
     idx = {n: i for i, n in enumerate(adj)}
     A = [[(idx[v], d) for v, d in adj[n]] for n in adj]
@@ -40,7 +38,6 @@ def longest(adj, start, end):
                 stack.append((v, seen | 1 << v, d + c))
     return best
 
-
 @timeFunction
 def main():
     g = readFile(toList=False)
@@ -49,7 +46,6 @@ def main():
     nodes = [start, end] + [(x, y) for y in range(1, h - 1) for x in range(1, w - 1) if g[y][x] != "#"
                             and sum(g[y + dy][x + dx] != "#" for dx, dy in DIRS4) > 2]
     printParts(*(longest(condense(g, nodes, s), start, end) for s in (True, False)))
-
 
 if __name__ == "__main__":
     main()

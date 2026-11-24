@@ -1,37 +1,16 @@
-import aocutils
+from itertools import pairwise
+from utils import ints, printParts, readFile, timeFunction
 
-# helper
-def isSafeArr(arr):
-    if sorted(arr) != arr and sorted(arr, reverse=True) != arr:
-        return False
+def safe(r):
+    ds = [b - a for a, b in pairwise(r)]
+    return all(1 <= d <= 3 for d in ds) or all(-3 <= d <= -1 for d in ds)
 
-    for i, j in zip(arr, arr[1:]):
-        if 1 > abs(i - j) or abs(i - j) > 3:
-            return False
-    return True
-
-@aocutils.timeFunction
+@timeFunction
 def main():
-    total1 = 0
-    total2 = 0
-    lines = aocutils.readFile(2, False)
-
-    for line in lines:
-        seq = list(map(int, line.split(" ")))
-
-        # part 1 and 2
-        if isSafeArr(seq):
-            total1 += 1
-            total2 += 1
-        else:
-            # part 2
-            for i in range(len(seq)):
-                temp = seq[::]
-                temp.pop(i)
-                if isSafeArr(temp):
-                    total2 += 1
-                    break
-    aocutils.printParts(total1, total2)
+    rs = [ints(l) for l in readFile(toList=False) if l]
+    one = sum(map(safe, rs))
+    two = sum(any(safe(r[:i] + r[i + 1:]) for i in range(len(r))) for r in rs)
+    printParts(one, two)
 
 if __name__ == "__main__":
     main()

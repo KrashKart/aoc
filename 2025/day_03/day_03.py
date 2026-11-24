@@ -1,23 +1,19 @@
-from aocutils import readFile, timeFunction, printParts
+from utils import printParts, readFile, timeFunction
 
-def recurse(l, lim):
-    if lim == 1:
-        return max(l)
-    n = len(l) - lim + 1
-    largest = max(l[:n])
-    return largest * 10 ** (lim - 1) + recurse(l[l.index(largest) + 1:], lim - 1)
-
+def joltage(s, n):
+    """Largest n-digit number keeping s's order: greedily take the biggest digit that leaves room for the rest."""
+    out, i = "", 0
+    for r in range(n, 0, -1):
+        window = s[i:len(s) - r + 1]
+        c = max(window)
+        i += window.index(c) + 1
+        out += c
+    return int(out)
 
 @timeFunction
 def main():
-    one, two = 0, 0
-    t = False
-    lines = readFile(3, toList=True, isTest=t)
-    for l in lines:
-        l = list(map(int, l))
-        one += recurse(l, 2)
-        two += recurse(l, 12)
-    printParts(one, two)
-    
+    banks = [l for l in readFile(toList=False) if l]
+    printParts(sum(joltage(b, 2) for b in banks), sum(joltage(b, 12) for b in banks))
+
 if __name__ == "__main__":
     main()
