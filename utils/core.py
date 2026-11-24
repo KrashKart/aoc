@@ -13,28 +13,32 @@ _DAY_RE = re.compile(r"\d+")
 
 
 def infer_year():
-    """Return the year from the running script's folder name (2024/day07.py -> 2024)."""
-    return int(Path(sys.argv[0]).resolve().parent.name)
+    """Return the year from the running script's path (2024/day_07/day_07.py -> 2024)."""
+    return int(Path(sys.argv[0]).resolve().parent.parent.name)
 
 
 def infer_day():
-    """Return the day from the running script's file name (day07.py -> 7)."""
-    return int(_DAY_RE.search(Path(sys.argv[0]).stem)[0])
+    """Return the day from the running script's folder name (2024/day_07/day_07.py -> 7)."""
+    return int(_DAY_RE.search(Path(sys.argv[0]).resolve().parent.name)[0])
 
 
-def input_path(day=None, year=None, isTest=False):
-    """Return the path <year>/txts/day-XX[_test].txt; day and year default to the running script's."""
-    return ROOT / str(year or infer_year()) / "txts" / f"day-{day or infer_day():02}{'_test' if isTest else ''}.txt"
+def input_path(day=None, year=None, isTest=False, name=None):
+    """Return <year>/day_XX/<file>.txt, where file is name, else "test" if isTest, else "day_XX".
+
+    day and year default to the running script's.
+    """
+    d = f"day_{day or infer_day():02}"
+    return ROOT / str(year or infer_year()) / d / f"{name or ('test' if isTest else d)}.txt"
 
 
-def readFile(day=None, year=None, splitOn="", isTest=False, toStrip=True, toList=True):
+def readFile(day=None, year=None, splitOn="", isTest=False, toStrip=True, toList=True, name=None):
     """Read an input file into a list of lines.
 
-    day/year: default to the running script's (see input_path); isTest: read the _test file.
+    day/year/isTest/name: pick the file (see input_path).
     toStrip: strip each line. splitOn: split each line on this string (r"\\w" splits on any whitespace).
     toList: turn each unsplit line into a list of characters.
     """
-    lines = input_path(day, year, isTest).read_text(encoding="utf-8-sig").splitlines()
+    lines = input_path(day, year, isTest, name).read_text(encoding="utf-8-sig").splitlines()
     if toStrip:
         lines = [l.strip() for l in lines]
     if splitOn:
@@ -42,9 +46,9 @@ def readFile(day=None, year=None, splitOn="", isTest=False, toStrip=True, toList
     return [list(l) for l in lines] if toList else lines
 
 
-def readRaw(day=None, year=None, isTest=False):
+def readRaw(day=None, year=None, isTest=False, name=None):
     """Return the whole input file as one string without the trailing newline."""
-    return input_path(day, year, isTest).read_text(encoding="utf-8-sig").rstrip("\n")
+    return input_path(day, year, isTest, name).read_text(encoding="utf-8-sig").rstrip("\n")
 
 
 def blocks(text):

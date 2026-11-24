@@ -1,4 +1,4 @@
-"""Re-run solutions and compare their printed answers with <year>/answers.json ({"01": [part1, part2], ...}).
+"""Re-run <year>/day_XX/day_XX.py and compare the printed answers with <year>/answers.json ({"01": [part1, part2], ...}).
 
 Usage: python check.py [years...]   (default: every year folder)
 """
@@ -14,8 +14,8 @@ PART_RE = re.compile(r"^Part ([12]): (.*?)\s*$", re.M)
 
 
 def run(year, day, expected):
-    """Run <year>/day<day>.py and return (year, day, passed, expected, got)."""
-    script = ROOT / year / f"day{day}.py"
+    """Run <year>/day_<day>/day_<day>.py and return (year, day, passed, expected, got)."""
+    script = ROOT / year / f"day_{day}" / f"day_{day}.py"
     r = subprocess.run([sys.executable, script.name], cwd=script.parent, capture_output=True, text=True)
     found = dict(PART_RE.findall(r.stdout))
     got = [found.get("1"), found.get("2")]
