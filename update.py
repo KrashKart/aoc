@@ -1,4 +1,4 @@
-"""Update everything: inputs (scaffolding new days from day_template.py), answers.json, README badges + chart, check.py.
+"""Update everything: inputs (scaffolding new days from day_template.py), answers.json, README badges + charts, check.py.
 
 Usage: python update.py [years...] [--no-check]
   years limit the input/answer fetches and the check (default: every unlocked year); the README always shows every year.
@@ -47,7 +47,7 @@ def main():
         stage(2, total, "Answers")
         for y in years:
             answers(y)
-        stage(3, total, "README badges + chart")
+        stage(3, total, "README badges + charts")
         update_readme()
     except RuntimeError as e:
         sys.exit(str(e))

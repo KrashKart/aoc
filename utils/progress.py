@@ -1,18 +1,17 @@
-"""README progress: badges/<year>.svg star bars and badges/times_part{1,2}.png completion-time charts.
+"""README progress: badges/<year>.svg star bars and badges/times_<year>.png part 1 and 2 completion-time charts.
 
 Times come from the private leaderboard AOC_BOARD (exact, as member AOC_USER_ID or the board's owner) when
 set, else from your self page, where anything over 24h has no time and shows as a gap.
 
 CLI: python -m utils.progress
 """
-lazy from .plot import plot_years
+lazy from .plot import plot_parts
 from .api import _config, days_in, personal_stats, private_leaderboard, star_times, unlocked
 from .core import ROOT
 import re
 
 GOLD, SILVER, OPEN, LOCKED, BG, FG = "#f5c518", "#c0c0c0", "#3a3a52", "#23233a", "#0f0f23", "#e6e6e6"
 BADGES = ROOT / "badges"
-MARK = re.compile(r"<!-- progress -->.*?<!-- /progress -->", re.S)
 
 def all_years():
     """Every <year> folder whose first puzzle has unlocked."""
@@ -54,30 +53,28 @@ def badge_svg(year, gold, silver, avail, total, w=360, h=28):
             f'<tspan fill="{FG}">/{total} ★</tspan><tspan fill="{SILVER}">{f" ({silver}☆)" if silver else ""}</tspan></text>'
             '</svg>')
 
+def _set_block(text, name, body, heading):
+    """Replace the <!-- name --> block in text, or append it under a new # heading."""
+    block = f"<!-- {name} -->\n{body}\n<!-- /{name} -->"
+    mark = re.compile(rf"<!-- {name} -->.*?<!-- /{name} -->", re.S)
+    return mark.sub(lambda _: block, text) if mark.search(text) else f"{text.rstrip()}\n\n# {heading}\n{block}\n"
+
 def update_readme(years=None):
-    """Write each year's badge and the times chart, then refresh the README progress block (newest year first)."""
+    """Write each year's badge and times chart, then refresh the README progress and times blocks (newest year first)."""
     years = sorted(years or all_years(), reverse=True)
     BADGES.mkdir(exist_ok=True)
-    lines = []
+    src = "private leaderboard" if _config("AOC_BOARD", False) else "self page, >24h shown as gaps"
+    badges, charts = [], []
     for y in years:
         (BADGES / f"{y}.svg").write_text(badge_svg(y, *(s := stars(y))), encoding="utf-8")
-        lines.append(f"![{y}: {2 * s[0] + s[1]}/{s[3]} stars](badges/{y}.svg)  ")
+        badges.append(f"![{y}: {2 * s[0] + s[1]}/{s[3]} stars](badges/{y}.svg)  ")
         print(f"  {y}: {s[0]} gold, {s[1]} silver, {2 * s[0] + s[1]}/{s[2]} unlocked, {s[3]} total", flush=True)
-    src = "private leaderboard" if _config("AOC_BOARD", False) else "self page, >24h shown as gaps"
-    t = {y: times(y) for y in years}
-    for p in (1, 2):
-        plot_years(t, part=p, out=BADGES / f"times_part{p}.png")
-        print(f"  chart: badges/times_part{p}.png ({src})", flush=True)
-    charts = "\n".join(f"![Part {p} completion times by year](badges/times_part{p}.png)" for p in (1, 2))
-    block = "<!-- progress -->\n" + "\n".join(lines) + f"\n\n{charts}\n<!-- /progress -->"
+        plot_parts(times(y), f"{y} completion times", BADGES / f"times_{y}.png")
+        charts.append(f"![{y} Part 1 and 2 completion times](badges/times_{y}.png)")
+        print(f"  chart: badges/times_{y}.png ({src})", flush=True)
     readme = ROOT / "README.md"
-    text = readme.read_text(encoding="utf-8")
-    if MARK.search(text):
-        text = MARK.sub(lambda _: block, text)
-    else:
-        head, sep, rest = text.partition("\n\n")
-        text = f"{head}\n\n{block}\n{sep}{rest}"
-    readme.write_text(text, encoding="utf-8")
+    text = _set_block(readme.read_text(encoding="utf-8"), "progress", "\n".join(badges), "Progress by Year")
+    readme.write_text(_set_block(text, "times", "\n".join(charts), "Completion Times by Year"), encoding="utf-8")
 
 def main():
     try:

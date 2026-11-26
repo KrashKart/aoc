@@ -46,15 +46,15 @@ def plot_times(times, compare=None, part=2, title=None, out=None):
     ax.set_ylabel("Minutes after unlock")
     _finish(ax, title or f"Part {part} completion times", out)
 
-def plot_years(years, part=2, out=None):
-    """Plot your completion times for several years on one chart; years maps year -> {day: [secs1, secs2]}."""
+def plot_parts(times, title, out=None):
+    """Plot Part 1 and Part 2 completion times for one year; times is {day: [secs1, secs2]}."""
     _, ax = plt.subplots(figsize=(10, 5))
-    for y, times in sorted(years.items()):
-        ax.plot(*_series(times, part), marker="o", label=str(y))
+    for p in (1, 2):
+        ax.plot(*_series(times, p), marker="o", label=f"Part {p}")
     ax.set_yscale("log")
     ax.set_xlabel("Day")
     ax.set_ylabel("Minutes after unlock")
-    _finish(ax, f"Part {part} completion times by year", out)
+    _finish(ax, title, out)
 
 def plot_ranks(ranks, title="Ranks", out=None):
     """Plot your rank per day for both parts; ranks maps day -> [rank1, rank2] (None if absent)."""
