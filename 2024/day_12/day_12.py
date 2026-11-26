@@ -3,9 +3,9 @@ from utils import DIRS4, Grid, components, printParts, readRaw, timeFunction
 @timeFunction
 def main():
     g = Grid.from_chars(readRaw())
-    d = g.data
+    d, nb = g.data, g.nbr4_fn()
     one = two = 0
-    for comp in components(range(len(d)), lambda i: (j for j in g.nbr4_idx(i) if d[j] == d[i])):
+    for comp in components(range(len(d)), lambda i: (j for j in nb(i) if d[j] == d[i])):
         s = {g.xy(i) for i in comp}
         per = corners = 0
         for x, y in s:

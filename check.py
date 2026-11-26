@@ -8,7 +8,9 @@ Usage: python check.py [years...] [days...]
        check.py 5          day 5 of every year
 Never touches the network: fill answers.json with `python -m utils.api answers <year>`.
 """
+lazy import ctypes
 import json
+import os
 import re
 import subprocess
 import sys
@@ -18,6 +20,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PART_RE = re.compile(r"^Part ([12]): (.*?)\s*$", re.M)
 TIMEOUT = 300
+
+def _colour_on():
+    """Colour only an interactive terminal; cmd/PowerShell consoles need VT processing switched on."""
+    if not sys.stdout.isatty():
+        return False
+    if os.name == "nt":
+        k, mode = ctypes.windll.kernel32, ctypes.c_uint32()
+        h = k.GetStdHandle(-11)
+        # 4 = ENABLE_VIRTUAL_TERMINAL_PROCESSING; best effort, as VS Code and Windows Terminal render ANSI regardless
+        if k.GetConsoleMode(h, ctypes.byref(mode)):
+            k.SetConsoleMode(h, mode.value | 4)
+    return True
+
+def _paint(code):
+    return (lambda s: f"\x1b[{code}m{s}\x1b[0m") if COLOUR else str
+
+COLOUR = _colour_on()
+# standard green, as some themes render bright green (92) as plain text; bright red stays readable on PowerShell 5's blue
+green, red = _paint(32), _paint(91)
 
 def run(year, day, expected):
     """Run one day and return (year, day, status, expected, got)."""
@@ -45,24 +66,34 @@ def parse_args(args):
             days.update(range(int(lo), int(hi or lo) + 1))
     return years or sorted(p.name for p in ROOT.iterdir() if p.is_dir() and p.name.isdigit()), days
 
-def main():
-    years, days = parse_args(sys.argv[1:])
+def check(years, days=(), indent=""):
+    """Run the chosen solutions in parallel, printing each result in order as it is ready; returns (passed, total)."""
     jobs = []
-    for y in years:
+    for y in map(str, years):
         f = ROOT / y / "answers.json"
         answers = json.loads(f.read_text(encoding="utf-8-sig")) if f.exists() else {}
         for s in sorted((ROOT / y).glob("day_*/day_*.py")):
             d = s.stem[4:]
             if d.isdigit() and (not days or int(d) in days):
                 jobs.append((y, d, answers.get(d)))
+    n, fails = len(jobs), []
     with ThreadPoolExecutor() as ex:
-        results = list(ex.map(lambda j: run(*j), jobs))
-    for year, day, status, exp, got in results:
-        detail = "" if status == "ok" else f"  expected {exp}, got {got}" if exp is not None else f"  got {got}"
-        print(f"{year} day {day}: {status}{detail}")
-    passed = sum(r[2] == "ok" for r in results)
-    print(f"{passed}/{len(results)} passed")
-    sys.exit(passed < len(results))
+        for i, (year, day, status, exp, got) in enumerate(ex.map(lambda j: run(*j), jobs), 1):
+            detail = "" if status == "ok" else f"  expected {exp}, got {got}" if exp is not None else f"  got {got}"
+            line = f"{year} day {day}: {status}{detail}"
+            if status != "ok":
+                fails.append(line)
+            print(f"{indent}{(green if status == 'ok' else red)(f'[{i}/{n}] {line}')}", flush=True)
+    print(f"{indent}{(red if fails else green)(f'{n - len(fails)}/{n} passed')}")
+    if fails:
+        print(f"{indent}{red(f'{len(fails)} failed:')}")
+        for line in fails:
+            print(f"{indent}  {red(line)}")
+    return n - len(fails), n
+
+def main():
+    passed, total = check(*parse_args(sys.argv[1:]))
+    sys.exit(passed < total)
 
 if __name__ == "__main__":
     main()

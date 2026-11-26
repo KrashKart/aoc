@@ -3,14 +3,14 @@ from utils import Grid, printParts, readRaw, timeFunction
 @timeFunction
 def main():
     g = Grid.from_digits(readRaw())
-    d, n = g.data, len(g.data)
+    d, n, nb = g.data, len(g.data), g.nbr4_fn()
     # sweep from height 9 down so every uphill neighbour is finished before its predecessor
     peaks, paths = [set() for _ in range(n)], [0] * n
     for i in sorted(range(n), key=lambda i: -d[i]):
         if d[i] == 9:
             peaks[i], paths[i] = {i}, 1
             continue
-        for j in g.nbr4_idx(i):
+        for j in nb(i):
             if d[j] == d[i] + 1:
                 peaks[i] |= peaks[j]
                 paths[i] += paths[j]

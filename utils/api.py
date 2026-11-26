@@ -17,6 +17,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from html import unescape
 from math import inf
+from statistics import median
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from .core import ROOT, infer_day, infer_year, input_path
@@ -30,7 +31,8 @@ _TIME_RE = re.compile(r"(\d+):(\d\d):(\d\d)")
 _ENTRY_RE = re.compile(r'leaderboard-time">[^<]*?(\d+:\d\d:\d\d)')
 _last = 0.0
 
-def _config(key):
+def _config(key, required=True):
+    """key from the environment or .env; None when missing and not required."""
     if v := os.environ.get(key):
         return v
     env = ROOT / ".env"
@@ -38,8 +40,9 @@ def _config(key):
         for line in env.read_text(encoding="utf-8-sig").splitlines():
             k, sep, v = line.partition("=")
             if sep and k.strip() == key:
-                return v.strip().strip("\"'")
-    raise RuntimeError(f"{key} is not set (environment variable or {env})")
+                return v.strip().strip("\"'") or None
+    if required:
+        raise RuntimeError(f"{key} is not set (environment variable or {env})")
 
 def _get(path, auth=True):
     """GET BASE + path, at most one request per MIN_GAP seconds."""
@@ -101,10 +104,11 @@ def fetch_input(day=None, year=None, force=False):
 def answers_path(year):
     return ROOT / str(year) / "answers.json"
 
-def fetch_answers(year, days=None, force=False):
+def fetch_answers(year, days=None, force=False, on_fetch=None):
     """Fill <year>/answers.json ({"01": [part1, part2], ...}) from the "Your puzzle answer was" lines on solved puzzle pages.
 
     Days already complete are not re-requested unless force; the last day only ever has one answer.
+    on_fetch(day) is called before each request.
     """
     f = answers_path(year)
     ans = json.loads(f.read_text(encoding="utf-8-sig")) if f.exists() else {}
@@ -114,6 +118,8 @@ def fetch_answers(year, days=None, force=False):
         k, have = f"{d:02}", ans.get(f"{d:02}", [None, None])
         if not force and have[0] is not None and (have[1] is not None or d == days_in(year)):
             continue
+        if on_fetch:
+            on_fetch(d)
         found = [unescape(a) for a in re.findall(r"Your puzzle answer was <code>(.*?)</code>", _get(f"/{year}/day/{d}"))]
         ans[k] = (found + [None, None])[:2]
         f.write_text(json.dumps(dict(sorted(ans.items())), indent=1), encoding="utf-8")
@@ -170,6 +176,16 @@ def star_times(board, member=None):
     days = board["members"][str(member or board["owner_id"])]["completion_day_level"]
     return {int(d): [int(p[k]["get_star_ts"] - unlock_time(year, int(d)).timestamp()) if k in p else None
                      for k in ("1", "2")] for d, p in sorted(days.items(), key=lambda kv: int(kv[0]))}
+
+def board_median(board):
+    """{day: [s1, s2]} median seconds after unlock across a private leaderboard's members who got each star."""
+    per = {}
+    for m in board["members"]:
+        for d, ts in star_times(board, m).items():
+            for p, t in enumerate(ts):
+                if t is not None:
+                    per.setdefault(d, ([], []))[p].append(t)
+    return {d: [median(v) if v else None for v in ps] for d, ps in sorted(per.items())}
 
 def _days(args, year):
     if not args:

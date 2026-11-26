@@ -67,34 +67,46 @@ class Grid:
         """Convert a flat index to (x, y)."""
         return i % self.w, i // self.w
 
-    def _nbrs(self, x, y, dirs):
-        w, h = self.w, self.h
-        for dx, dy in dirs:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < w and 0 <= ny < h:
-                yield nx, ny
-
     def neighbours4(self, x, y):
-        """Yield the in-bounds orthogonal neighbours of (x, y)."""
-        return self._nbrs(x, y, DIRS4)
+        """Return the in-bounds orthogonal neighbours of (x, y), not taking walls into account."""
+        w, h = self.w, self.h
+        return [(x + dx, y + dy) for dx, dy in DIRS4 if 0 <= x + dx < w and 0 <= y + dy < h]
 
     def neighbours8(self, x, y):
-        """Yield the in-bounds orthogonal and diagonal neighbours of (x, y)."""
-        return self._nbrs(x, y, DIRS8)
+        """Return the in-bounds orthogonal and diagonal neighbours of (x, y), not taking walls into account."""
+        w, h = self.w, self.h
+        return [(x + dx, y + dy) for dx, dy in DIRS8 if 0 <= x + dx < w and 0 <= y + dy < h]
 
-    def nbr4_idx(self, i):
-        """Return the flat indices of the in-bounds orthogonal neighbours of flat index i."""
-        w, x, out = self.w, i % self.w, []
-        # i % w guards stop i±1 wrapping onto the previous/next row
-        if x:
-            out.append(i - 1)
-        if x + 1 < w:
-            out.append(i + 1)
-        if i >= w:
-            out.append(i - w)
-        if i + w < len(self.data):
-            out.append(i + w)
-        return out
+    def adj4(self, walls=()):
+        """Precompute valid adjacent flat indices for each cell, taking walls into account."""
+        w, d, n = self.w, self.data, len(self.data)
+        walls = {ord(v) if isinstance(v, str) else v for v in walls}
+        ok = [v not in walls for v in d]
+        # -1 marks a left/right step that would wrap rows; the range test drops it with the off-grid ups/downs
+        return [tuple(j for j in (i - 1 if i % w else -1, i + 1 if (i + 1) % w else -1, i - w, i + w)
+                      if 0 <= j < n and ok[j]) for i in range(n)]
+
+    def nbr4_fn(self, walls=()):
+        """Return a neighbours(i) function over graph searches, taking walls into account.
+
+        Best for a single traversal; for 3+ traversals of the same grid use adj4(walls).__getitem__ instead.
+        """
+        w, n = self.w, len(self.data)
+        walls = {ord(v) if isinstance(v, str) else v for v in walls}
+        ok = bytes(v not in walls for v in self.data)
+
+        def nb(i):
+            x, out = i % w, []
+            if x and ok[i - 1]:
+                out.append(i - 1)
+            if x + 1 < w and ok[i + 1]:
+                out.append(i + 1)
+            if i >= w and ok[i - w]:
+                out.append(i - w)
+            if i + w < n and ok[i + w]:
+                out.append(i + w)
+            return out
+        return nb
 
     def copy(self):
         """Return an independent copy of the grid."""

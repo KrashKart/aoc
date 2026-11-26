@@ -1,5 +1,5 @@
 from itertools import combinations, pairwise
-from utils import Grid, bfs, grid_neighbours, ints, printParts, readFile, timeFunction
+from utils import Grid, bfs, ints, printParts, readFile, timeFunction
 
 @timeFunction
 def main():
@@ -15,7 +15,7 @@ def main():
         for cy in range(min(Y[y1], Y[y2]), max(Y[y1], Y[y2]) + 1):
             for cx in range(min(X[x1], X[x2]), max(X[x1], X[x2]) + 1):
                 g.set(cx, cy, 1)
-    outside = bfs(0, grid_neighbours(g, walls=b"\x01"))
+    outside = bfs(0, g.nbr4_fn((1,)))
 
     # P[y][x] = outside cells in the compressed rectangle [0, x) x [0, y)
     P = [[0] * (W + 1) for _ in range(H + 1)]

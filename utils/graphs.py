@@ -23,6 +23,7 @@ def bfs(start, neighbours, goal=None):
     return dist
 
 def _goal_test(goal):
+    """Helper to standardize goal as a predicate."""
     return goal if callable(goal) else (lambda u: u == goal) if goal is not None else (lambda u: False)
 
 def dijkstra(start, neighbours, goal=None):
@@ -35,8 +36,8 @@ def dijkstra(start, neighbours, goal=None):
     heap = [(0, start)]
     while heap:
         d, u = heappop(heap)
-        # stale entry: u was already settled with a shorter distance
         if d > dist[u]:
+            # repeat entry, so continue and skip
             continue
         if done(u):
             return dist, parents, u
@@ -49,7 +50,10 @@ def dijkstra(start, neighbours, goal=None):
     return dist, parents, None
 
 def dijkstra_all(start, neighbours, goal=None):
-    """Like dijkstra, but parents[node] lists every predecessor on a shortest path (for all_shortest_paths)."""
+    """Like dijkstra, but parents[node] lists every predecessor on a shortest path (for all_shortest_paths).
+
+    Stopping at goal only keeps parents[goal] complete when every edge cost is positive.
+    """
     done = _goal_test(goal)
     dist, parents = {start: 0}, {start: []}
     heap = [(0, start)]
@@ -173,22 +177,3 @@ class UnionFind:
 def topo_sort(deps):
     """Order nodes so every node comes after its prerequisites; deps maps node -> iterable of prerequisites."""
     return list(TopologicalSorter(deps).static_order())
-
-def grid_neighbours(grid, walls=b"#"):
-    """Return a neighbours(i) function over a Grid's flat indices that skips cells whose value is in walls."""
-    w, n = grid.w, len(grid.data)
-    walls = set(walls)
-    ok = bytes(v not in walls for v in grid.data)
-
-    def nb(i):
-        x, out = i % w, []
-        if x and ok[i - 1]:
-            out.append(i - 1)
-        if x + 1 < w and ok[i + 1]:
-            out.append(i + 1)
-        if i >= w and ok[i - w]:
-            out.append(i - w)
-        if i + w < n and ok[i + w]:
-            out.append(i + w)
-        return out
-    return nb
